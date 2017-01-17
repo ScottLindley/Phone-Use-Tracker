@@ -1,63 +1,79 @@
 package com.scottlindley.mobliezombie;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.hardware.display.DisplayManager;
-import android.os.Handler;
+import android.content.IntentFilter;
 import android.os.IBinder;
-import android.view.Display;
+import android.util.Log;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 public class UsageService extends Service {
+    private static final String TAG = "UsageService";
+    BroadcastReceiver mScreenReceiver;
+    DBHelper mHelper;
+    long mTimeOn, mTimeOff, mTimeDiff;
+    int mRunningTime, mNumTimesChecked;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        mHelper = DBHelper.getInstance(getApplicationContext());
+        mRunningTime = 0;
+        mTimeOn = System.currentTimeMillis();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "onStartCommand: "); 
         Thread serviceThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                final Handler handler = new Handler();
-                Timer timer = new Timer(false);
-                TimerTask timerTask = new TimerTask() {
+                mScreenReceiver = new BroadcastReceiver() {
                     @Override
-                    public void run() {
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                //Do stuff here
-                            }
-                        });
+                    public void onReceive(Context context, Intent intent) {
+                        Calendar calendar = Calendar.getInstance();
+                        SimpleDateFormat format = new SimpleDateFormat("MMMM d, yyyy");
+                        String day = format.format(calendar.getTime());
+                        int rowsAffected = 0;
+                        if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
+                            Log.d(TAG, "onReceive: SCREEN ON");
+                            mTimeOn = System.currentTimeMillis();
+                            mNumTimesChecked++;
+                            rowsAffected = mHelper.updateChecks(day, mNumTimesChecked);
+                        } else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)){
+                            Log.d(TAG, "onReceive: SCREEN OFF");
+                            mTimeOff = System.currentTimeMillis();
+                            Log.d(TAG, "onReceive: time on: "+mTimeOn);
+                            Log.d(TAG, "onReceive: time off: "+mTimeOff);
+                            mTimeDiff = mTimeOff - mTimeOn;
+                            Log.d(TAG, "onReceive: time diff: "+mTimeDiff);
+                            mRunningTime = (int)(long)(mRunningTime + mTimeDiff)/1000;
+                            Log.d(TAG, "onReceive: running time: "+mRunningTime);
+                            rowsAffected = mHelper.updateSeconds(day, (mRunningTime));
+                        }
+                        if (rowsAffected == 0){
+                            mHelper.addNewDateEntry(day, mRunningTime, mNumTimesChecked);
+                        }
                     }
                 };
-                timer.schedule(timerTask, 1000);
+                registerReceiver(mScreenReceiver, new IntentFilter(Intent.ACTION_SCREEN_ON));
+                registerReceiver(mScreenReceiver, new IntentFilter(Intent.ACTION_SCREEN_OFF));
             }
         });
+        serviceThread.start();
 
         return START_NOT_STICKY;
     }
 
-    private boolean isScreenOn(){
-        boolean screenIsOn = false;
-        DisplayManager displayManager =
-                (DisplayManager)getSystemService(Context.DISPLAY_SERVICE);
-        for (Display currentDisplay : displayManager.getDisplays()){
-            if (currentDisplay.getState() != Display.STATE_OFF){
-                screenIsOn = true;
-            }
-        }
-        return screenIsOn;
-    }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        unregisterReceiver(mScreenReceiver);
     }
 
     @Override

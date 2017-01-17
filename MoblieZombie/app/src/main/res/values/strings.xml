@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">" Moblie Zombie"</string>
+    <string name="day_clock">Time: </string>
+    <string name="day_checks">Times checked: </string>
 </resources>
