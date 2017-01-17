@@ -15,8 +15,8 @@ public class UsageService extends Service {
     private static final String TAG = "UsageService";
     BroadcastReceiver mScreenReceiver;
     DBHelper mHelper;
-    long mTimeOn, mTimeOff, mTimeDiff;
-    int mRunningTime, mNumTimesChecked;
+    long mTimeOn, mTimeOff;
+    int mRunningTime, mNumTimesChecked, mTimeDiff;
 
     @Override
     public void onCreate() {
@@ -49,9 +49,9 @@ public class UsageService extends Service {
                             mTimeOff = System.currentTimeMillis();
                             Log.d(TAG, "onReceive: time on: "+mTimeOn);
                             Log.d(TAG, "onReceive: time off: "+mTimeOff);
-                            mTimeDiff = mTimeOff - mTimeOn;
+                            mTimeDiff = (int)(long)(mTimeOff - mTimeOn)/1000;
                             Log.d(TAG, "onReceive: time diff: "+mTimeDiff);
-                            mRunningTime = (int)(long)(mRunningTime + mTimeDiff)/1000;
+                            mRunningTime = mRunningTime + mTimeDiff;
                             Log.d(TAG, "onReceive: running time: "+mRunningTime);
                             rowsAffected = mHelper.updateSeconds(day, (mRunningTime));
                         }
@@ -60,8 +60,10 @@ public class UsageService extends Service {
                         }
                     }
                 };
-                registerReceiver(mScreenReceiver, new IntentFilter(Intent.ACTION_SCREEN_ON));
-                registerReceiver(mScreenReceiver, new IntentFilter(Intent.ACTION_SCREEN_OFF));
+                IntentFilter filter = new IntentFilter();
+                filter.addAction(Intent.ACTION_SCREEN_ON);
+                filter.addAction(Intent.ACTION_SCREEN_OFF);
+                registerReceiver(mScreenReceiver, filter);
             }
         });
         serviceThread.start();
