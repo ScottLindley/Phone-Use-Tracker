@@ -171,7 +171,7 @@ public class AverageFragment extends Fragment {
                     builder.append("s");
                 }
             }
-        } else if (projectedTime <268000 && projectedTime >= 604800){
+        } else if (projectedTime <2628000 && projectedTime >= 604800){
             //under a month per year
             int weeks = projectedTime/604800;
             int days = (projectedTime%604800)/86400;

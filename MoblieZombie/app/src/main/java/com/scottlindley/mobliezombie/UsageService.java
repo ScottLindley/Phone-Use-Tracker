@@ -14,7 +14,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 public class UsageService extends Service {
-    private static final String TAG = "UsageService";
     public static final String ANSWER_REFRESH_INTENT = "Answer Refresh";
     public static final int NOTIFICATION_ID = 88;
     BroadcastReceiver mScreenReceiver, mRefreshReceiver;
@@ -28,7 +27,6 @@ public class UsageService extends Service {
         mHelper = DBHelper.getInstance(getApplicationContext());
         mRunningTime = 0;
         mTimeOn = System.currentTimeMillis();
-        Log.d(TAG, "onStartCommand: ");
         Intent notificationIntent = new Intent(this, UsageService.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
@@ -71,7 +69,6 @@ public class UsageService extends Service {
     }
 
     private void handleScreenOn(){
-        Log.d(TAG, "onReceive: SCREEN ON");
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat format = new SimpleDateFormat("MMMM d, yyyy");
         String day = format.format(calendar.getTime());
@@ -84,7 +81,6 @@ public class UsageService extends Service {
     }
 
     private void handleScreenOff(){
-        Log.d(TAG, "onReceive: SCREEN OFF");
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat format = new SimpleDateFormat("MMMM d, yyyy");
         String day = format.format(calendar.getTime());
