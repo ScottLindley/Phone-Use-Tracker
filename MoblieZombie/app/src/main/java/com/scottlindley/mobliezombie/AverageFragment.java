@@ -146,7 +146,7 @@ public class AverageFragment extends Fragment {
             //under a day per year
             int hours = projectedTime/3600;
             int minutes = (projectedTime%3600)/60;
-            builder.append(projectedTime/3600 + " hour");
+            builder.append(hours + " hour");
             if (hours != 1){
                 builder.append("s");
             }
@@ -160,7 +160,7 @@ public class AverageFragment extends Fragment {
             //under a week per year
             int days = projectedTime/86400;
             int hours = (projectedTime%86400)/3600;
-            builder.append(projectedTime/3600 + " day");
+            builder.append(days + " day");
             if (days != 1){
                 builder.append("s");
             }
