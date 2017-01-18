@@ -15,6 +15,7 @@ import java.util.Calendar;
 
 public class UsageService extends Service {
     private static final String TAG = "UsageService";
+    public static final String ANSWER_REFRESH_INTENT = "Answer Refresh";
     public static final int NOTIFICATION_ID = 88;
     BroadcastReceiver mScreenReceiver, mRefreshReceiver;
     DBHelper mHelper;
@@ -34,45 +35,19 @@ public class UsageService extends Service {
         Notification notification = new Notification.Builder(this)
                 .setContentTitle("Mobile Zombie")
                 .setContentText("Tracking Usage")
-                .setSmallIcon(R.drawable.crown)
+                .setSmallIcon(R.drawable.zombie)
                 .setContentIntent(pendingIntent)
                 .setTicker("HI")
                 .build();
         startForeground(NOTIFICATION_ID, notification);
+
         mScreenReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Calendar calendar = Calendar.getInstance();
-                SimpleDateFormat format = new SimpleDateFormat("MMMM d, yyyy");
-                String day = format.format(calendar.getTime());
-                int rowsAffected = 0;
                 if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
-                    Log.d(TAG, "onReceive: SCREEN ON");
-                    long lastTimeOn = mTimeOn;
-                    mTimeOn = System.currentTimeMillis();
-                    if (lastTimeOn != mTimeOn) {
-                        mNumTimesChecked++;
-                        rowsAffected = mHelper.updateChecks(day, mNumTimesChecked);
-                        if (rowsAffected == 0) {
-                            mHelper.addNewDateEntry(day, mRunningTime, mNumTimesChecked);
-                        }
-                    }
-                } else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)){
-                    long lastTimeOff = mTimeOff;
-                    Log.d(TAG, "onReceive: SCREEN OFF");
-                    mTimeOff = System.currentTimeMillis();
-                    if (lastTimeOff != mTimeOff) {
-                        Log.d(TAG, "onReceive: time on: " + mTimeOn);
-                        Log.d(TAG, "onReceive: time off: " + mTimeOff);
-                        mTimeDiff = (int) (long) (mTimeOff - mTimeOn) / 1000;
-                        Log.d(TAG, "onReceive: time diff: " + mTimeDiff);
-                        mRunningTime = mRunningTime + mTimeDiff;
-                        Log.d(TAG, "onReceive: running time: " + mRunningTime);
-                        rowsAffected = mHelper.updateSeconds(day, (mRunningTime));
-                        if (rowsAffected == 0) {
-                            mHelper.addNewDateEntry(day, mRunningTime, mNumTimesChecked);
-                        }
-                    }
+                    handleScreenOn();
+                } else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
+                    handleScreenOff();
                 }
             }
         };
@@ -80,7 +55,9 @@ public class UsageService extends Service {
         mRefreshReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-
+                handleScreenOff();
+                Intent refreshDoneIntent = new Intent(ANSWER_REFRESH_INTENT);
+                sendBroadcast(refreshDoneIntent);
             }
         };
 
@@ -90,16 +67,38 @@ public class UsageService extends Service {
         registerReceiver(mScreenReceiver, filter);
 
         registerReceiver(mRefreshReceiver, new IntentFilter(MainActivity.REQUEST_REFRESH_INTENT));
+    }
 
+    private void handleScreenOn(){
+        Log.d(TAG, "onReceive: SCREEN ON");
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat format = new SimpleDateFormat("MMMM d, yyyy");
+        String day = format.format(calendar.getTime());
+        mTimeOn = System.currentTimeMillis();
+        mNumTimesChecked++;
+        int rowsAffected = mHelper.updateChecks(day, mNumTimesChecked);
+        if (rowsAffected == 0) {
+            mHelper.addNewDateEntry(day, mRunningTime, mNumTimesChecked);
+        }
+    }
 
+    private void handleScreenOff(){
+        Log.d(TAG, "onReceive: SCREEN OFF");
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat format = new SimpleDateFormat("MMMM d, yyyy");
+        String day = format.format(calendar.getTime());
+        mTimeOff = System.currentTimeMillis();
+        mTimeDiff = (int) (long) (mTimeOff - mTimeOn) / 1000;
+        mRunningTime = mRunningTime + mTimeDiff;
+        int rowsAffected = mHelper.updateSeconds(day, mRunningTime);
+        if (rowsAffected == 0) {
+            mHelper.addNewDateEntry(day, mRunningTime, mNumTimesChecked);
+        }
+        mTimeOn = mTimeOff;
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-
-        return START_NOT_STICKY;
-    }
-
+    public int onStartCommand(Intent intent, int flags, int startId) {return START_NOT_STICKY;}
 
     @Override
     public void onDestroy() {
@@ -108,7 +107,5 @@ public class UsageService extends Service {
     }
 
     @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
+    public IBinder onBind(Intent intent) {return null;}
 }

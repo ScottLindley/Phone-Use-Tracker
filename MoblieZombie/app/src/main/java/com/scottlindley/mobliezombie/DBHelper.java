@@ -6,6 +6,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Scott Lindley on 1/17/2017.
  */
@@ -90,8 +93,29 @@ public class DBHelper extends SQLiteOpenHelper{
                     cursor.getInt(cursor.getColumnIndex(COL_SECONDS)),
                     cursor.getInt(cursor.getColumnIndex(COL_CHECKS)),
                     day);
+            cursor.close();
             return data;
         }
+        cursor.close();
         return null;
+    }
+
+    public List<DayData> getAllData(){
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(
+                DAY_TABLE, null, null, null, null, null, null);
+        List<DayData> data = new ArrayList<>();
+        if (cursor.moveToFirst()){
+            while(!cursor.isAfterLast()){
+                data.add(new DayData(
+                        cursor.getInt(cursor.getColumnIndex(COL_SECONDS)),
+                        cursor.getInt(cursor.getColumnIndex(COL_CHECKS)),
+                        cursor.getString(cursor.getColumnIndex(COL_DATE))
+                ));
+                cursor.moveToNext();
+            }
+        }
+        cursor.close();
+        return data;
     }
 }
