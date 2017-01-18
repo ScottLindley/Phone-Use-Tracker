@@ -15,13 +15,24 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class HistoryFragment extends Fragment {
     private RecyclerView mRecyclerView;
     private RecyclerAdapter mAdapter;
     private SwipeRefreshLayout mRefreshLayout;
+    private LineChart mLineChart;
     private DBHelper mHelper;
+    private boolean mRefreshedHistoryFragment;
+    private BroadcastReceiver mReceiver;
 
     public HistoryFragment() {
         // Required empty public constructor
@@ -35,6 +46,7 @@ public class HistoryFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mRefreshedHistoryFragment = true;
     }
 
     @Override
@@ -49,15 +61,24 @@ public class HistoryFragment extends Fragment {
 
         mRecyclerView = (RecyclerView)view.findViewById(R.id.recycler_view);
         mRecyclerView.setLayoutManager(
-                new LinearLayoutManager(view.getContext(),LinearLayoutManager.VERTICAL, true));
+                new LinearLayoutManager(view.getContext()));
         List<DayData> dayDataList = mHelper.getAllData();
         mAdapter = new RecyclerAdapter(dayDataList);
         mRecyclerView.setAdapter(mAdapter);
+
+        mLineChart = (LineChart)view.findViewById(R.id.history_line_chart);
+        mLineChart.getLegend().setEnabled(false);
+        mLineChart.getAxisRight().setDrawGridLines(false);
+        mLineChart.getAxisRight().setDrawLabels(false);
+        mLineChart.setDrawGridBackground(false);
+        mLineChart.setDescription(null);
+        mLineChart.setTouchEnabled(false);
 
         mRefreshLayout = (SwipeRefreshLayout)view.findViewById(R.id.recycler_swipe_refresh);
         mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
+                mRefreshedHistoryFragment = true;
                 refreshFragmentData();
                 mRefreshLayout.setRefreshing(false);
                 Intent intent = new Intent(MainActivity.FRAGMENT_REFRESH_INTENT);
@@ -72,23 +93,63 @@ public class HistoryFragment extends Fragment {
     }
 
     private void setUpReceiver(){
-        BroadcastReceiver receiver = new BroadcastReceiver() {
+        mReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 refreshFragmentData();
             }
         };
-        getActivity().registerReceiver(receiver, new IntentFilter(MainActivity.ACTIVITY_TO_FRAGMENT_REFRESH));
+        getActivity().registerReceiver(mReceiver, new IntentFilter(MainActivity.ACTIVITY_TO_FRAGMENT_REFRESH));
     }
 
     private void refreshFragmentData(){
         List<DayData> data = mHelper.getAllData();
+        List<Entry> entries = new ArrayList<>();
+        int maximumTime = 0;
+        for (int i=0; i<data.size(); i++){
+            if (data.get(i).getSeconds() > maximumTime){
+                maximumTime = data.get(i).getSeconds();
+            }
+            entries.add(new Entry(i+1, data.get(i).getSeconds()));
+        }
+        Collections.reverse(data);
         mAdapter.refreshData(data);
+
+        mLineChart.getAxisLeft().setAxisMaximum((float)maximumTime*1.125f);
+        mLineChart.getAxisLeft().setDrawLabels(false);
+        XAxis xAxis = mLineChart.getXAxis();
+        xAxis.setEnabled(true);
+        xAxis.setDrawGridLines(false);
+        xAxis.setDrawLabels(true);
+        xAxis.setLabelCount(data.size());
+        xAxis.setAxisMaximum((float)data.size());
+
+        LineDataSet set = new LineDataSet(entries, "Tombie Time");
+        set.setColor(getResources().getColor(R.color.colorAccent));
+        set.setValueFormatter(new MyValueFormatter());
+        set.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        set.setDrawFilled(true);
+        set.setFillAlpha(220);
+        set.setFillColor(getResources().getColor(R.color.colorAccent));
+        LineData lineData = new LineData(set);
+        mLineChart.setData(lineData);
+        if (mRefreshedHistoryFragment){
+            mLineChart.animateXY(1000, 1000);
+            mRefreshedHistoryFragment = false;
+        } else {
+            mLineChart.invalidate();
+        }
     }
 
     @Override
     public void onResume() {
         refreshFragmentData();
         super.onResume();
+    }
+
+    @Override
+    public void onDestroy() {
+        getActivity().unregisterReceiver(mReceiver);
+        super.onDestroy();
     }
 }

@@ -22,6 +22,7 @@ public class AverageFragment extends Fragment {
     private TextView mAverageTimeView, mAverageChecksView, mPercentageView, mProjectedUseView;
     private SwipeRefreshLayout mRefreshLayout;
     private ProgressBar mProgressBar;
+    private BroadcastReceiver mReceiver;
 
 
     public AverageFragment() {
@@ -80,13 +81,13 @@ public class AverageFragment extends Fragment {
     }
 
     private void setUpReceiver(){
-        BroadcastReceiver receiver = new BroadcastReceiver() {
+        mReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 refreshFragmentData();
             }
         };
-        getActivity().registerReceiver(receiver, new IntentFilter(MainActivity.ACTIVITY_TO_FRAGMENT_REFRESH));
+        getActivity().registerReceiver(mReceiver, new IntentFilter(MainActivity.ACTIVITY_TO_FRAGMENT_REFRESH));
     }
 
     private void refreshFragmentData(){
@@ -207,5 +208,11 @@ public class AverageFragment extends Fragment {
     public void onResume() {
         refreshFragmentData();
         super.onResume();
+    }
+
+    @Override
+    public void onDestroy() {
+        getActivity().unregisterReceiver(mReceiver);
+        super.onDestroy();
     }
 }

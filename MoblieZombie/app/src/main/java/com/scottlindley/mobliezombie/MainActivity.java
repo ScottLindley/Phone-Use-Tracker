@@ -14,12 +14,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.PieChart;
-import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.formatter.IValueFormatter;
-import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -78,8 +75,8 @@ public class MainActivity extends AppCompatActivity{
         mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                sendRefreshRequest();
                 mRefreshedTodayCard = true;
+                sendRefreshRequest();
             }
         });
         mRefreshLayout.setColorSchemeColors(getResources().getColor(R.color.colorAccent));
@@ -156,7 +153,7 @@ public class MainActivity extends AppCompatActivity{
         }
     }
 
-    private void setUpRefreshReceiver(){
+    private void setUpRefreshReceiver() {
         BroadcastReceiver refreshReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -164,15 +161,17 @@ public class MainActivity extends AppCompatActivity{
             }
         };
 
-        BroadcastReceiver fragmentRefreshReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                sendRefreshRequest();
-            }
-        };
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+            BroadcastReceiver fragmentRefreshReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    sendRefreshRequest();
+                }
+            };
 
-        registerReceiver(refreshReceiver, new IntentFilter(UsageService.ANSWER_REFRESH_INTENT));
-        registerReceiver(fragmentRefreshReceiver, new IntentFilter(FRAGMENT_REFRESH_INTENT));
+            registerReceiver(fragmentRefreshReceiver, new IntentFilter(FRAGMENT_REFRESH_INTENT));
+        }
+            registerReceiver(refreshReceiver, new IntentFilter(UsageService.ANSWER_REFRESH_INTENT));
     }
 
     private void sendRefreshRequest(){
@@ -186,14 +185,5 @@ public class MainActivity extends AppCompatActivity{
     protected void onResume() {
         sendRefreshRequest();
         super.onResume();
-    }
-
-    public class MyValueFormatter implements IValueFormatter {
-        public MyValueFormatter() {}
-
-        @Override
-        public String getFormattedValue(float value, Entry entry, int dataSetIndex, ViewPortHandler viewPortHandler) {
-            return "";
-        }
     }
 }
