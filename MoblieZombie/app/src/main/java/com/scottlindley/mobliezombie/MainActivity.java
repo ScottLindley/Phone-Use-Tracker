@@ -4,28 +4,44 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Configuration;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
-import android.support.design.widget.TabLayout;
 
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.IValueFormatter;
+import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity{
     public static final String FRAGMENT_REFRESH_INTENT = "Fragment Refresh Intent";
     public static final String ACTIVITY_TO_FRAGMENT_REFRESH = "act to frag refresh";
     public static final String REQUEST_REFRESH_INTENT = "Request Refresh";
     private SwipeRefreshLayout mRefreshLayout;
+    private PieChart mPieChart;
     private TextView mClockView, mChecksView;
+    private boolean mRefreshedTodayCard;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
 
         getSupportActionBar().hide();
 
@@ -64,30 +80,42 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onRefresh() {
                 sendRefreshRequest();
+                mRefreshedTodayCard = true;
             }
         });
         mRefreshLayout.setColorSchemeColors(getResources().getColor(R.color.colorAccent));
 
-        ViewPager viewPager = (ViewPager)findViewById(R.id.view_pager);
-        viewPager.setAdapter(new ViewPagerAdapter(getSupportFragmentManager()));
-        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                sendRefreshRequest();
-            }
+        mPieChart = (PieChart)findViewById(R.id.today_pie_chart);
+        mPieChart.setDrawSliceText(false);
+        mPieChart.getLegend().setEnabled(false);
+        mPieChart.setTouchEnabled(false);
+        mPieChart.setTransparentCircleRadius(50f);
+        mPieChart.setDescription(null);
+        mPieChart.setCenterTextColor(getResources().getColor(R.color.colorAccent));
+        mPieChart.setCenterTextSize(14);
 
-            @Override
-            public void onPageSelected(int position) {
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+            ViewPager viewPager = (ViewPager) findViewById(R.id.view_pager);
+            viewPager.setAdapter(new ViewPagerAdapter(getSupportFragmentManager()));
+            viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+                @Override
+                public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                    sendRefreshRequest();
+                }
 
-            }
+                @Override
+                public void onPageSelected(int position) {
 
-            @Override
-            public void onPageScrollStateChanged(int state) {
+                }
 
-            }
-        });
-        TabLayout tabLayout = (TabLayout)findViewById(R.id.tablayout);
-        tabLayout.setupWithViewPager(viewPager);
+                @Override
+                public void onPageScrollStateChanged(int state) {
+
+                }
+            });
+            TabLayout tabLayout = (TabLayout) findViewById(R.id.tablayout);
+            tabLayout.setupWithViewPager(viewPager);
+        }
     }
 
     private void updateViews(){
@@ -110,6 +138,22 @@ public class MainActivity extends AppCompatActivity {
             mRefreshLayout.setRefreshing(false);
             mClockView.setText(clockText);
             mChecksView.setText(checksText);
+            mPieChart.setEntryLabelColor(getResources().getColor(R.color.colorAccent));
+            List<PieEntry> entries = new ArrayList<>();
+            entries.add(new PieEntry((float)totalSeconds, "Time on Phone"));
+            entries.add(new PieEntry((float)86400 - totalSeconds));
+            PieDataSet set = new PieDataSet(entries, "Day Ratio");
+            set.setColors(new int[]{getResources().getColor(R.color.colorAccent), Color.DKGRAY});
+            set.setValueFormatter(new MyValueFormatter());
+            PieData data = new PieData(set);
+            mPieChart.setData(data);
+            mPieChart.setCenterText((totalSeconds*100/86400)+"%");
+            if (mRefreshedTodayCard){
+                mPieChart.animateX(1000);
+                mRefreshedTodayCard = false;
+            } else {
+                mPieChart.invalidate();
+            }
         }
     }
 
@@ -143,5 +187,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         sendRefreshRequest();
         super.onResume();
+    }
+
+    public class MyValueFormatter implements IValueFormatter {
+        public MyValueFormatter() {}
+
+        @Override
+        public String getFormattedValue(float value, Entry entry, int dataSetIndex, ViewPortHandler viewPortHandler) {
+            return "";
+        }
     }
 }

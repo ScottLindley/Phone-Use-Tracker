@@ -107,7 +107,7 @@ public class AverageFragment extends Fragment {
 
         mAverageTimeView.setText("Average Time: "+ timeFormatted);
         mAverageChecksView.setText("Average Checks: "+averageChecks);
-        mPercentageView.setText((averageTime/mProgressBar.getMax()*100)+"% of your day");
+        mPercentageView.setText((averageTime*100/mProgressBar.getMax())+"% of your day");
         mProgressBar.setProgress(averageTime);
     }
 
