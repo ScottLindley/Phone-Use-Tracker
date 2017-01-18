@@ -14,6 +14,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -30,6 +31,7 @@ public class HistoryFragment extends Fragment {
     private RecyclerAdapter mAdapter;
     private SwipeRefreshLayout mRefreshLayout;
     private LineChart mLineChart;
+    private TextView mGraphKey;
     private DBHelper mHelper;
     private boolean mRefreshedHistoryFragment;
     private BroadcastReceiver mReceiver;
@@ -58,6 +60,8 @@ public class HistoryFragment extends Fragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         mHelper = DBHelper.getInstance(view.getContext());
+
+        mGraphKey = (TextView)view.findViewById(R.id.graph_key);
 
         mRecyclerView = (RecyclerView)view.findViewById(R.id.recycler_view);
         mRecyclerView.setLayoutManager(
@@ -104,6 +108,12 @@ public class HistoryFragment extends Fragment {
 
     private void refreshFragmentData(){
         List<DayData> data = mHelper.getAllData();
+        if (data.size() < 2){
+           mGraphKey.setText("Log more days to plot usage graph");
+        } else {
+            mGraphKey.setText("Usage over Days");
+        }
+
         List<Entry> entries = new ArrayList<>();
         int maximumTime = 0;
         for (int i=0; i<data.size(); i++){

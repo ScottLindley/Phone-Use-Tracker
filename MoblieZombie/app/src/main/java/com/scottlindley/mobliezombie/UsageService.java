@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
-import android.util.Log;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -27,7 +26,7 @@ public class UsageService extends Service {
         mHelper = DBHelper.getInstance(getApplicationContext());
         mRunningTime = 0;
         mTimeOn = System.currentTimeMillis();
-        Intent notificationIntent = new Intent(this, UsageService.class);
+        Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
         //TODO: Edit and add updates to this notification
@@ -36,7 +35,6 @@ public class UsageService extends Service {
                 .setContentText("Tracking Usage")
                 .setSmallIcon(R.drawable.zombie)
                 .setContentIntent(pendingIntent)
-                .setTicker("HI")
                 .build();
         startForeground(NOTIFICATION_ID, notification);
 
