@@ -32,6 +32,7 @@ public class UsageService extends Service {
         Intent notificationIntent = new Intent(this, UsageService.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
+        //TODO: Edit and add updates to this notification
         Notification notification = new Notification.Builder(this)
                 .setContentTitle("Mobile Zombie")
                 .setContentText("Tracking Usage")
@@ -102,8 +103,9 @@ public class UsageService extends Service {
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
+        handleScreenOff();
         unregisterReceiver(mScreenReceiver);
+        super.onDestroy();
     }
 
     @Override

@@ -40,10 +40,25 @@
                 android:textSize="18dp"
                 android:layout_below="@id/day_ratio_bar"/>
             <TextView
+                android:id="@+id/projected_use"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:layout_centerHorizontal="true"
+                android:gravity="center"
+                android:layout_below="@id/day_percentage_view"/>
+            <ImageView
+                android:id="@+id/average_divider"
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:background="@color/colorAccent"
+                android:layout_margin="8dp"
+                android:layout_below="@id/projected_use"/>
+            <TextView
                 android:id="@+id/average_checks"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/day_percentage_view"
+                android:layout_below="@id/average_divider"
                 android:layout_centerHorizontal="true"
                 android:layout_margin="8dp"
                 android:textSize="24sp"/>
