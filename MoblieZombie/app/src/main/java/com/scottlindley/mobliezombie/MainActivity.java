@@ -16,7 +16,8 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
-    private static final String TAG = "MainActivity";
+    public static final String FRAGMENT_REFRESH_INTENT = "Fragment Refresh Intent";
+    public static final String ACTIVITY_TO_FRAGMENT_REFRESH = "act to frag refresh";
     public static final String REQUEST_REFRESH_INTENT = "Request Refresh";
     private SwipeRefreshLayout mRefreshLayout;
     private TextView mClockView, mChecksView;
@@ -37,8 +38,7 @@ public class MainActivity extends AppCompatActivity {
 
         setUpViews();
 
-        Intent intent = new Intent(REQUEST_REFRESH_INTENT);
-        sendBroadcast(intent);
+        sendRefreshRequest();
     }
 
     private void startTrackingService(){
@@ -63,14 +63,29 @@ public class MainActivity extends AppCompatActivity {
         mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                Intent intent = new Intent(REQUEST_REFRESH_INTENT);
-                sendBroadcast(intent);
+                sendRefreshRequest();
             }
         });
         mRefreshLayout.setColorSchemeColors(getResources().getColor(R.color.colorAccent));
 
         ViewPager viewPager = (ViewPager)findViewById(R.id.view_pager);
         viewPager.setAdapter(new ViewPagerAdapter(getSupportFragmentManager()));
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                sendRefreshRequest();
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
         TabLayout tabLayout = (TabLayout)findViewById(R.id.tablayout);
         tabLayout.setupWithViewPager(viewPager);
     }
@@ -106,13 +121,27 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
+        BroadcastReceiver fragmentRefreshReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                sendRefreshRequest();
+            }
+        };
+
         registerReceiver(refreshReceiver, new IntentFilter(UsageService.ANSWER_REFRESH_INTENT));
+        registerReceiver(fragmentRefreshReceiver, new IntentFilter(FRAGMENT_REFRESH_INTENT));
+    }
+
+    private void sendRefreshRequest(){
+        Intent serviceIntent = new Intent(REQUEST_REFRESH_INTENT);
+        sendBroadcast(serviceIntent);
+        Intent fragmentIntent = new Intent(ACTIVITY_TO_FRAGMENT_REFRESH);
+        sendBroadcast(fragmentIntent);
     }
 
     @Override
     protected void onResume() {
-        Intent intent = new Intent(REQUEST_REFRESH_INTENT);
-        sendBroadcast(intent);
+        sendRefreshRequest();
         super.onResume();
     }
 }

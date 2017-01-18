@@ -1,6 +1,10 @@
 package com.scottlindley.mobliezombie;
 
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -44,7 +48,8 @@ public class HistoryFragment extends Fragment {
         mHelper = DBHelper.getInstance(view.getContext());
 
         mRecyclerView = (RecyclerView)view.findViewById(R.id.recycler_view);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(view.getContext()));
+        mRecyclerView.setLayoutManager(
+                new LinearLayoutManager(view.getContext(),LinearLayoutManager.VERTICAL, true));
         List<DayData> dayDataList = mHelper.getAllData();
         mAdapter = new RecyclerAdapter(dayDataList);
         mRecyclerView.setAdapter(mAdapter);
@@ -53,19 +58,37 @@ public class HistoryFragment extends Fragment {
         mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                List<DayData> data = mHelper.getAllData();
-                mAdapter.refreshData(data);
+                refreshFragmentData();
                 mRefreshLayout.setRefreshing(false);
+                Intent intent = new Intent(MainActivity.FRAGMENT_REFRESH_INTENT);
+                getActivity().sendBroadcast(intent);
             }
         });
         mRefreshLayout.setColorSchemeColors(getResources().getColor(R.color.colorAccent));
+
+        setUpReceiver();
+
         super.onViewCreated(view, savedInstanceState);
+    }
+
+    private void setUpReceiver(){
+        BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                refreshFragmentData();
+            }
+        };
+        getActivity().registerReceiver(receiver, new IntentFilter(MainActivity.ACTIVITY_TO_FRAGMENT_REFRESH));
+    }
+
+    private void refreshFragmentData(){
+        List<DayData> data = mHelper.getAllData();
+        mAdapter.refreshData(data);
     }
 
     @Override
     public void onResume() {
-        List<DayData> data = mHelper.getAllData();
-        mAdapter.refreshData(data);
+        refreshFragmentData();
         super.onResume();
     }
 }
