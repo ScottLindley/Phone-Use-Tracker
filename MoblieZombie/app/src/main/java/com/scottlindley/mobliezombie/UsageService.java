@@ -8,9 +8,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
+import android.util.Log;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+
+import static android.content.ContentValues.TAG;
 
 public class UsageService extends Service {
     public static final String ANSWER_REFRESH_INTENT = "Answer Refresh";
@@ -87,16 +90,24 @@ public class UsageService extends Service {
         mRunningTime = mRunningTime + mTimeDiff;
         int rowsAffected = mHelper.updateSeconds(day, mRunningTime);
         if (rowsAffected == 0) {
+            Log.d(TAG, "handleScreenOff: new day");
             //It's a new day
-            long secondsSinceMidnight = findSecondsPastMidnight(mTimeDiff);
+            long secondsSinceMidnight = findSecondsPastMidnight();
             if (mTimeDiff > secondsSinceMidnight){
+                Log.d(TAG, "handleScreenOff: through midnight");
                 //User was using his/her phone at midnight
                 mRunningTime = (int) (mRunningTime - secondsSinceMidnight);
-                mHelper.updateYesterday(mRunningTime, mNumTimesChecked);
+                int yesterdayUpdated = mHelper.updateYesterday(mRunningTime, mNumTimesChecked);
                 mRunningTime = (int) secondsSinceMidnight;
                 mNumTimesChecked = 0;
                 mHelper.addNewDateEntry(day, mRunningTime, mNumTimesChecked);
+                if (yesterdayUpdated == 0){
+                    Log.d(TAG, "handleScreenOff: yesterday empty");
+                    mHelper.updateSeconds(day, 0);
+                    mHelper.updateChecks(day, 0);
+                }
             } else {
+                Log.d(TAG, "handleScreenOff: new day entry");
                 //User starting using phone in the new day
                 mNumTimesChecked = 1;
                 mTimeDiff = (int) (long) (mTimeOff - mTimeOn) / 1000;
@@ -107,13 +118,15 @@ public class UsageService extends Service {
         mTimeOn = mTimeOff;
     }
 
-    private long findSecondsPastMidnight(long now){
+    private long findSecondsPastMidnight(){
         Calendar c = Calendar.getInstance();
+        long now = c.getTimeInMillis();
         c.set(Calendar.HOUR_OF_DAY, 0);
         c.set(Calendar.MINUTE, 0);
         c.set(Calendar.SECOND, 0);
         c.set(Calendar.MILLISECOND, 0);
         long passed = now - c.getTimeInMillis();
+        Log.d(TAG, "findSecondsPastMidnight: "+passed);
         return passed / 1000;
     }
 

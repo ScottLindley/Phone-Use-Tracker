@@ -75,6 +75,7 @@ public class DBHelper extends SQLiteOpenHelper{
 
     public int updateYesterday (int seconds, int checks){
         List<DayData> dayDataList = getAllData();
+        if (dayDataList.isEmpty()){return 0;}
         String yesterday = dayDataList.get(dayDataList.size()-1).getDate();
 
         SQLiteDatabase db = getWritableDatabase();
