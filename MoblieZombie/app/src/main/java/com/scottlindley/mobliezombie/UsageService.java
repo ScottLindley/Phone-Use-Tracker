@@ -87,9 +87,34 @@ public class UsageService extends Service {
         mRunningTime = mRunningTime + mTimeDiff;
         int rowsAffected = mHelper.updateSeconds(day, mRunningTime);
         if (rowsAffected == 0) {
-            mHelper.addNewDateEntry(day, mRunningTime, mNumTimesChecked);
+            //It's a new day
+            long secondsSinceMidnight = findSecondsPastMidnight(mTimeDiff);
+            if (mTimeDiff > secondsSinceMidnight){
+                //User was using his/her phone at midnight
+                mRunningTime = (int) (mRunningTime - secondsSinceMidnight);
+                mHelper.updateYesterday(mRunningTime, mNumTimesChecked);
+                mRunningTime = (int) secondsSinceMidnight;
+                mNumTimesChecked = 0;
+                mHelper.addNewDateEntry(day, mRunningTime, mNumTimesChecked);
+            } else {
+                //User starting using phone in the new day
+                mNumTimesChecked = 1;
+                mTimeDiff = (int) (long) (mTimeOff - mTimeOn) / 1000;
+                mRunningTime = mTimeDiff;
+                mHelper.addNewDateEntry(day, mRunningTime, mNumTimesChecked);
+            }
         }
         mTimeOn = mTimeOff;
+    }
+
+    private long findSecondsPastMidnight(long now){
+        Calendar c = Calendar.getInstance();
+        c.set(Calendar.HOUR_OF_DAY, 0);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        long passed = now - c.getTimeInMillis();
+        return passed / 1000;
     }
 
     @Override

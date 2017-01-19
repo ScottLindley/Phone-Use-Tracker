@@ -7,7 +7,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -70,6 +69,19 @@ public class DBHelper extends SQLiteOpenHelper{
         ContentValues values = new ContentValues();
         values.put(COL_SECONDS, seconds);
         int rowsAffected = db.update(DAY_TABLE, values, "date = ?", new String[]{day});
+        db.close();
+        return rowsAffected;
+    }
+
+    public int updateYesterday (int seconds, int checks){
+        List<DayData> dayDataList = getAllData();
+        String yesterday = dayDataList.get(dayDataList.size()-1).getDate();
+
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COL_SECONDS, seconds);
+        values.put(COL_CHECKS, checks);
+        int rowsAffected = db.update(DAY_TABLE, values, "date = ?", new String[]{yesterday});
         db.close();
         return rowsAffected;
     }

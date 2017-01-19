@@ -133,6 +133,7 @@ public class HistoryFragment extends Fragment {
         xAxis.setDrawLabels(true);
         xAxis.setLabelCount(data.size());
         xAxis.setAxisMaximum((float)data.size());
+        xAxis.setAxisMinimum(1f);
 
         LineDataSet set = new LineDataSet(entries, "Tombie Time");
         set.setColor(getResources().getColor(R.color.colorAccent));
