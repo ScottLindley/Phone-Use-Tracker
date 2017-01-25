@@ -69,9 +69,7 @@ public class AverageFragment extends Fragment {
         mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                refreshFragmentData();
-                Intent intent = new Intent(MainActivity.FRAGMENT_REFRESH_INTENT);
-                getActivity().sendBroadcast(intent);
+                sendRefreshRequest();
                 mRefreshLayout.setRefreshing(false);
             }
         });
@@ -87,7 +85,7 @@ public class AverageFragment extends Fragment {
                 refreshFragmentData();
             }
         };
-        getActivity().registerReceiver(mReceiver, new IntentFilter(MainActivity.ACTIVITY_TO_FRAGMENT_REFRESH));
+        getActivity().registerReceiver(mReceiver, new IntentFilter(UsageService.ANSWER_REFRESH_INTENT));
     }
 
     private void refreshFragmentData(){
@@ -204,10 +202,26 @@ public class AverageFragment extends Fragment {
         return builder.toString();
     }
 
+    private void sendRefreshRequest(){
+        Intent intent = new Intent(MainActivity.REQUEST_REFRESH_INTENT);
+        getActivity().sendBroadcast(intent);
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser && isResumed()){
+            onResume();
+        }
+    }
+
     @Override
     public void onResume() {
-        refreshFragmentData();
         super.onResume();
+        if(!getUserVisibleHint()){
+           return;
+        }
+        sendRefreshRequest();
     }
 
     @Override

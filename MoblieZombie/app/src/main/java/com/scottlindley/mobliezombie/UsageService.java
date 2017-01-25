@@ -12,6 +12,7 @@ import android.util.Log;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 
 import static android.content.ContentValues.TAG;
 
@@ -75,23 +76,24 @@ public class UsageService extends Service {
         String day = format.format(calendar.getTime());
         mTimeOn = System.currentTimeMillis();
         mNumTimesChecked++;
-        int rowsAffected = mHelper.updateChecks(day, mNumTimesChecked);
-        if (rowsAffected == 0) {
-            mHelper.addNewDateEntry(day, mRunningTime, mNumTimesChecked);
-        }
+        mHelper.updateChecks(day, mNumTimesChecked);
     }
 
     private void handleScreenOff(){
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat format = new SimpleDateFormat("MMMM d, yyyy");
-        String day = format.format(calendar.getTime());
+        String today = format.format(calendar.getTime());
         mTimeOff = System.currentTimeMillis();
         mTimeDiff = (int) (long) (mTimeOff - mTimeOn) / 1000;
         mRunningTime = mRunningTime + mTimeDiff;
-        int rowsAffected = mHelper.updateSeconds(day, mRunningTime);
-        if (rowsAffected == 0) {
-            Log.d(TAG, "handleScreenOff: new day");
+        List<String> days = mHelper.getAllDays();
+        if (!days.isEmpty() && days.contains(today)){
+            //if it's not a new day
+            Log.d(TAG, "handleScreenOff: day = "+today+", time = "+mRunningTime);
+            mHelper.updateSeconds(today, mRunningTime);
+        } else {
             //It's a new day
+            Log.d(TAG, "handleScreenOff: new day");
             long secondsSinceMidnight = findSecondsPastMidnight();
             if (mTimeDiff > secondsSinceMidnight){
                 Log.d(TAG, "handleScreenOff: through midnight");
@@ -100,11 +102,11 @@ public class UsageService extends Service {
                 int yesterdayUpdated = mHelper.updateYesterday(mRunningTime, mNumTimesChecked);
                 mRunningTime = (int) secondsSinceMidnight;
                 mNumTimesChecked = 0;
-                mHelper.addNewDateEntry(day, mRunningTime, mNumTimesChecked);
+                mHelper.addNewDateEntry(today, mRunningTime, mNumTimesChecked);
                 if (yesterdayUpdated == 0){
                     Log.d(TAG, "handleScreenOff: yesterday empty");
-                    mHelper.updateSeconds(day, 0);
-                    mHelper.updateChecks(day, 0);
+                    mHelper.updateSeconds(today, 0);
+                    mHelper.updateChecks(today, 0);
                 }
             } else {
                 Log.d(TAG, "handleScreenOff: new day entry");
@@ -112,7 +114,7 @@ public class UsageService extends Service {
                 mNumTimesChecked = 1;
                 mTimeDiff = (int) (long) (mTimeOff - mTimeOn) / 1000;
                 mRunningTime = mTimeDiff;
-                mHelper.addNewDateEntry(day, mRunningTime, mNumTimesChecked);
+                mHelper.addNewDateEntry(today, mRunningTime, mNumTimesChecked);
             }
         }
         mTimeOn = mTimeOff;

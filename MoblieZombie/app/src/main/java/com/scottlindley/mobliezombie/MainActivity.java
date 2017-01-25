@@ -24,8 +24,6 @@ import java.util.Calendar;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity{
-    public static final String FRAGMENT_REFRESH_INTENT = "Fragment Refresh Intent";
-    public static final String ACTIVITY_TO_FRAGMENT_REFRESH = "act to frag refresh";
     public static final String REQUEST_REFRESH_INTENT = "Request Refresh";
     private SwipeRefreshLayout mRefreshLayout;
     private PieChart mPieChart;
@@ -48,6 +46,7 @@ public class MainActivity extends AppCompatActivity{
         startTrackingService();
 
         mRefreshedTodayCard = true;
+
         setUpViews();
 
         sendRefreshRequest();
@@ -96,7 +95,7 @@ public class MainActivity extends AppCompatActivity{
             viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
                 @Override
                 public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                    sendRefreshRequest();
+
                 }
 
                 @Override
@@ -106,7 +105,6 @@ public class MainActivity extends AppCompatActivity{
 
                 @Override
                 public void onPageScrollStateChanged(int state) {
-
                 }
             });
             TabLayout tabLayout = (TabLayout) findViewById(R.id.tablayout);
@@ -161,29 +159,17 @@ public class MainActivity extends AppCompatActivity{
             }
         };
 
-        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-            BroadcastReceiver fragmentRefreshReceiver = new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    sendRefreshRequest();
-                }
-            };
-
-            registerReceiver(fragmentRefreshReceiver, new IntentFilter(FRAGMENT_REFRESH_INTENT));
-        }
-            registerReceiver(refreshReceiver, new IntentFilter(UsageService.ANSWER_REFRESH_INTENT));
+        registerReceiver(refreshReceiver, new IntentFilter(UsageService.ANSWER_REFRESH_INTENT));
     }
 
     private void sendRefreshRequest(){
         Intent serviceIntent = new Intent(REQUEST_REFRESH_INTENT);
         sendBroadcast(serviceIntent);
-        Intent fragmentIntent = new Intent(ACTIVITY_TO_FRAGMENT_REFRESH);
-        sendBroadcast(fragmentIntent);
     }
 
     @Override
     protected void onResume() {
-        sendRefreshRequest();
+        updateViews();
         super.onResume();
     }
 }

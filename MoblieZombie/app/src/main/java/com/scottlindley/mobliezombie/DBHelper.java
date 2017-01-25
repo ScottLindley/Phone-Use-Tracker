@@ -111,6 +111,7 @@ public class DBHelper extends SQLiteOpenHelper{
             return data;
         }
         cursor.close();
+        db.close();
         return null;
     }
 
@@ -130,6 +131,23 @@ public class DBHelper extends SQLiteOpenHelper{
             }
         }
         cursor.close();
+        db.close();
         return data;
+    }
+
+    public List<String> getAllDays(){
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(
+                DAY_TABLE, new String[]{COL_DATE}, null, null, null, null, null);
+        List<String> days = new ArrayList<>();
+        if (cursor.moveToFirst()){
+            while(!cursor.isAfterLast()){
+                days.add(cursor.getString(cursor.getColumnIndex(COL_DATE)));
+                cursor.moveToNext();
+            }
+        }
+        cursor.close();
+        db.close();
+        return days;
     }
 }

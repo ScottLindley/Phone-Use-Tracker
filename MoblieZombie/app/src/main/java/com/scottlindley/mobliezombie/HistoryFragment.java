@@ -83,10 +83,8 @@ public class HistoryFragment extends Fragment {
             @Override
             public void onRefresh() {
                 mRefreshedHistoryFragment = true;
-                refreshFragmentData();
                 mRefreshLayout.setRefreshing(false);
-                Intent intent = new Intent(MainActivity.FRAGMENT_REFRESH_INTENT);
-                getActivity().sendBroadcast(intent);
+                sendRefreshRequest();
             }
         });
         mRefreshLayout.setColorSchemeColors(getResources().getColor(R.color.colorAccent));
@@ -103,7 +101,7 @@ public class HistoryFragment extends Fragment {
                 refreshFragmentData();
             }
         };
-        getActivity().registerReceiver(mReceiver, new IntentFilter(MainActivity.ACTIVITY_TO_FRAGMENT_REFRESH));
+        getActivity().registerReceiver(mReceiver, new IntentFilter(UsageService.ANSWER_REFRESH_INTENT));
     }
 
     private void refreshFragmentData(){
@@ -152,10 +150,26 @@ public class HistoryFragment extends Fragment {
         }
     }
 
+    private void sendRefreshRequest(){
+        Intent intent = new Intent(MainActivity.REQUEST_REFRESH_INTENT);
+        getActivity().sendBroadcast(intent);
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser && isResumed()){
+            onResume();
+        }
+    }
+
     @Override
     public void onResume() {
-        refreshFragmentData();
         super.onResume();
+        if (!getUserVisibleHint()){
+            return;
+        }
+        sendRefreshRequest();
     }
 
     @Override
