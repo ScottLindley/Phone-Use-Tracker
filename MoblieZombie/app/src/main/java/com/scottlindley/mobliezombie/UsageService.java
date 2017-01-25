@@ -89,14 +89,11 @@ public class UsageService extends Service {
         List<String> days = mHelper.getAllDays();
         if (!days.isEmpty() && days.contains(today)){
             //if it's not a new day
-            Log.d(TAG, "handleScreenOff: day = "+today+", time = "+mRunningTime);
             mHelper.updateSeconds(today, mRunningTime);
         } else {
             //It's a new day
-            Log.d(TAG, "handleScreenOff: new day");
             long secondsSinceMidnight = findSecondsPastMidnight();
             if (mTimeDiff > secondsSinceMidnight){
-                Log.d(TAG, "handleScreenOff: through midnight");
                 //User was using his/her phone at midnight
                 mRunningTime = (int) (mRunningTime - secondsSinceMidnight);
                 int yesterdayUpdated = mHelper.updateYesterday(mRunningTime, mNumTimesChecked);
@@ -104,12 +101,10 @@ public class UsageService extends Service {
                 mNumTimesChecked = 0;
                 mHelper.addNewDateEntry(today, mRunningTime, mNumTimesChecked);
                 if (yesterdayUpdated == 0){
-                    Log.d(TAG, "handleScreenOff: yesterday empty");
                     mHelper.updateSeconds(today, 0);
                     mHelper.updateChecks(today, 0);
                 }
             } else {
-                Log.d(TAG, "handleScreenOff: new day entry");
                 //User starting using phone in the new day
                 mNumTimesChecked = 1;
                 mTimeDiff = (int) (long) (mTimeOff - mTimeOn) / 1000;
@@ -128,7 +123,6 @@ public class UsageService extends Service {
         c.set(Calendar.SECOND, 0);
         c.set(Calendar.MILLISECOND, 0);
         long passed = now - c.getTimeInMillis();
-        Log.d(TAG, "findSecondsPastMidnight: "+passed);
         return passed / 1000;
     }
 
